@@ -22,9 +22,6 @@
             font-size: 1.2rem;
             margin-bottom: 20px;
         }
-        .file-upload {
-            margin-bottom: 20px;
-        }
         table {
             font-size: 0.9rem;
         }
@@ -59,12 +56,7 @@
 <body>
 
 <h1>📋 Stock & Order Management 💼</h1>
-<p class="happy">Welcome! Upload the stock file, view stock details, and place your orders easily. 😊</p>
-
-<div class="file-upload">
-    <label for="fileInput" class="form-label">📂 Upload Stock File:</label>
-    <input type="file" id="fileInput" class="form-control">
-</div>
+<p class="happy">Welcome! View stock details and place your orders easily. 😊</p>
 
 <table class="table table-striped table-bordered">
     <thead>
@@ -77,7 +69,7 @@
     </thead>
     <tbody id="stockTableBody">
         <tr>
-            <td colspan="4" class="text-center">No data available. Upload the stock file above. ⬆️</td>
+            <td colspan="4" class="text-center">Loading data... ⏳</td>
         </tr>
     </tbody>
 </table>
@@ -107,80 +99,4 @@
 </div>
 
 <script>
-    // Auto-fill today's date
-    document.getElementById('orderDate').value = new Date().toISOString().split('T')[0];
-
-    // Handle stock file upload
-    document.getElementById('fileInput').addEventListener('change', function (e) {
-        const file = e.target.files[0];
-        if (!file) {
-            alert("No file selected. Please upload a valid stock file.");
-            return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = function (e) {
-            try {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                const sheetName = workbook.SheetNames[0];
-                const sheet = workbook.Sheets[sheetName];
-                const rows = XLSX.utils.sheet_to_json(sheet);
-
-                const tbody = document.getElementById('stockTableBody');
-                const productNameSelect = document.getElementById('productName');
-                tbody.innerHTML = '';
-                productNameSelect.innerHTML = '<option value="" disabled selected>Select a Product</option>';
-
-                let totalStockValue = 0;
-                rows.forEach(row => {
-                    const { BrandName, StockInHand, MRP, SalePrice } = row;
-
-                    // Calculate total stock value
-                    totalStockValue += (SalePrice || 0) * (StockInHand || 0);
-
-                    // Populate table
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>${BrandName || 'N/A'}</td>
-                        <td>${StockInHand || 0}</td>
-                        <td>₹${MRP || 0}</td>
-                        <td>₹${SalePrice || 0}</td>
-                    `;
-                    tbody.appendChild(tr);
-
-                    // Populate dropdown
-                    const option = document.createElement('option');
-                    option.value = BrandName || 'N/A';
-                    option.textContent = BrandName || 'N/A';
-                    productNameSelect.appendChild(option);
-                });
-
-                document.getElementById('totalStockValue').textContent = `₹${totalStockValue.toFixed(2)}`;
-            } catch (error) {
-                alert("Error reading the file. Please ensure it's a valid Excel file with the correct format.");
-            }
-        };
-
-        reader.readAsArrayBuffer(file);
-    });
-
-    // Handle order submission
-    document.getElementById('orderForm').addEventListener('submit', function (e) {
-        e.preventDefault();
-
-        const productName = document.getElementById('productName').value;
-        const quantity = document.getElementById('quantity').value;
-        const unit = document.getElementById('unit').value;
-        const partyName = document.getElementById('partyName').value;
-        const salesmanName = document.getElementById('salesmanName').value;
-        const orderDate = document.getElementById('orderDate').value;
-        const specialPrice = document.getElementById('specialPrice').value;
-
-        alert(`Order Submitted Successfully!\n\nProduct: ${productName}\nQuantity: ${quantity} ${unit}\nParty: ${partyName}\nSalesman: ${salesmanName}\nDate: ${orderDate}\nSpecial Price: ₹${specialPrice || 'N/A'}`);
-        document.getElementById('orderForm').reset();
-    });
-</script>
-
-</body>
-</html>
+    // Auto-fill
