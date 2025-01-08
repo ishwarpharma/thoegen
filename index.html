@@ -219,6 +219,7 @@
       }
     }
   </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
 </head>
 <body>
   <header>
@@ -229,6 +230,7 @@
     </div>
   </header>
   <div class="container">
+    <input type="file" id="file-upload" />
     <input type="text" id="search" class="search-bar" placeholder="Search items...">
     <div id="item-list"></div>
   </div>
@@ -282,14 +284,25 @@
     let data = [];
     let cart = [];
 
-    // Fetch data from JSON (you'll need to convert your Excel file to JSON)
-    fetch('data.json')
-      .then(response => response.json())
-      .then(json => {
-        data = json;
-        displayItems(json);
-      });
+    document.getElementById('file-upload').addEventListener('change', handleFile, false);
 
+    function handleFile(e) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+
+      reader.onload = function(event) {
+        const data = new Uint8Array(event.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const json = XLSX.utils.sheet_to_json(sheet);
+        displayItems(json);
+      };
+
+      reader.readAsArrayBuffer(file);
+    }
+
+  
     // Display items
     function displayItems(items) {
       const itemList = document.getElementById('item-list');
@@ -306,7 +319,7 @@
             <span>Company: ${item['Company']}</span>
           </div>
         `;
-              div.addEventListener('click', () => selectItem(item['Sl']));
+        div.addEventListener('click', () => selectItem(item));
         itemList.appendChild(div);
       });
     }
@@ -320,9 +333,8 @@
       displayItems(filteredData);
     });
 
-    // Select item
-    function selectItem(sl) {
-      const item = data.find(i => i['Sl'] === sl);
+    // Select item (Order Popup)
+    function selectItem(item) {
       document.getElementById('selected-item-details').innerHTML = `
         <strong>${item['Product Name']}</strong><br>
         <span>Pack: ${item['Pack']}</span> <span>Box: ${item['Box']}</span> <span>Shipper: ${item['Shipper']}</span>
@@ -403,9 +415,6 @@
       const options = { day: '2-digit', month: 'long', year: 'numeric' };
       return date.toLocaleDateString('en-IN', options);
     }
-
-    // Initialize today's date in Indian format
-    document.querySelector('.cart-modal h3').innerHTML = `Order Summary (${formatDate(new Date())})`;
 
   </script>
 </body>
