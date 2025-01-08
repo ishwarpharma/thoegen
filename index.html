@@ -4,26 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stock and Order Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f0f8ff;
-            color: #333;
+            background-color: #f8f9fa;
             padding: 20px;
         }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
+        h1 {
+            text-align: center;
+            color: #007bff;
         }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
+        .happy {
+            font-size: 1.2rem;
+            color: #28a745;
+        }
+        table {
+            margin-top: 20px;
         }
         th {
-            background-color: #4CAF50;
+            background-color: #007bff;
             color: white;
+        }
+        .emoji {
+            font-size: 1.5rem;
         }
         .order-form {
             background-color: #fff;
@@ -39,7 +44,7 @@
             border-radius: 4px;
         }
         .order-form button {
-            background-color: #4CAF50;
+            background-color: #28a745;
             color: white;
             padding: 10px 20px;
             border: none;
@@ -47,61 +52,143 @@
             cursor: pointer;
         }
         .order-form button:hover {
-            background-color: #45a049;
-        }
-        .emoji {
-            font-size: 1.5em;
+            background-color: #218838;
         }
     </style>
 </head>
 <body>
-    <h1>📋 Stock and Order Management</h1>
-    <table>
-        <thead>
-            <tr>
-                <th>Product Name</th>
-                <th>Current Stock</th>
-                <th>M.R.P.</th>
-                <th>Sales Price</th>
-                <th>Company</th>
-            </tr>
-        </thead>
-        <tbody id="product-table">
-            <!-- Data will be populated here from stock.xlsx -->
-        </tbody>
-    </table>
-    <div class="order-form">
-        <h2>🛒 Place an Order</h2>
-        <form id="order-form">
-            <label for="product">Select Product:</label>
-            <select id="product" name="product" required>
-                <!-- Options will be populated here from stock.xlsx -->
+
+<h1>📋 Stock & Order Management 💼</h1>
+<p class="happy">Welcome to the stock overview page! 😊 Use this to check prices and place orders quickly.</p>
+
+<div class="mb-3">
+    <label for="fileInput" class="form-label">📂 Upload Stock File:</label>
+    <input type="file" id="fileInput" class="form-control">
+</div>
+
+<table class="table table-striped table-bordered">
+    <thead>
+        <tr>
+            <th>Brand Name</th>
+            <th>Stock in Hand</th>
+            <th>MRP</th>
+            <th>Sale Price</th>
+        </tr>
+    </thead>
+    <tbody id="stockTableBody">
+        <tr><td colspan="4" class="text-center">No data available yet. Upload the stock file above. ⬆️</td></tr>
+    </tbody>
+</table>
+
+<div class="alert alert-info mt-3">
+    Total Stock Value: <span id="totalStockValue">₹0.00</span>
+</div>
+
+<div class="order-form mt-4">
+    <h2>🛒 Place Your Order</h2>
+    <form id="orderForm">
+        <div class="mb-3">
+            <label for="productName" class="form-label">Product Name:</label>
+            <select id="productName" class="form-control" required>
+                <!-- Product options will be populated here -->
             </select>
-            <label for="quantity">Quantity:</label>
-            <input type="number" id="quantity" name="quantity" min="1" required>
-            <label for="unit">Unit:</label>
-            <select id="unit" name="unit" required>
+        </div>
+        <div class="mb-3">
+            <label for="quantity" class="form-label">Quantity:</label>
+            <input type="number" id="quantity" class="form-control" min="1" required>
+        </div>
+        <div class="mb-3">
+            <label for="unit" class="form-label">Unit:</label>
+            <select id="unit" class="form-control" required>
                 <option value="boxes">Boxes</option>
                 <option value="units">Units</option>
                 <option value="cases">Cases</option>
             </select>
-            <label for="party-name">Party Name:</label>
-            <input type="text" id="party-name" name="party-name" required>
-            <label for="salesman-name">Salesman Name:</label>
-            <input type="text" id="salesman-name" name="salesman-name" required>
-            <label for="special-price">Special Price (if any):</label>
-            <input type="number" id="special-price" name="special-price">
-            <label for="order-date">Order Date:</label>
-            <input type="date" id="order-date" name="order-date" value="<?php echo date('Y-m-d'); ?>" required>
-            <button type="submit">Submit Order</button>
-        </form>
-    </div>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Fetch data from stock.xlsx and populate the table and select options
-            // This part requires server-side scripting to read the Excel file and output the data as JSON
-            // Example: fetch('path/to/your/server/script').then(response => response.json()).then(data => { ... });
-        });
-    </script>
+        </div>
+        <div class="mb-3">
+            <label for="partyName" class="form-label">Party Name:</label>
+            <input type="text" id="partyName" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label for="salesmanName" class="form-label">Salesman Name:</label>
+            <input type="text" id="salesmanName" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label for="orderDate" class="form-label">Order Date:</label>
+            <input type="date" id="orderDate" class="form-control" value="" required>
+        </div>
+        <div class="mb-3">
+            <label for="specialPrice" class="form-label">Special Price (Optional):</label>
+            <input type="number" id="specialPrice" class="form-control">
+        </div>
+        <button type="submit" class="btn btn-success">Submit Order 📝</button>
+    </form>
+</div>
+
+<script>
+    // Auto-fill today's date
+    document.getElementById('orderDate').value = new Date().toISOString().split('T')[0];
+
+    // Handle stock file upload
+    document.getElementById('fileInput').addEventListener('change', function (e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const sheetName = workbook.SheetNames[0];
+            const sheet = workbook.Sheets[sheetName];
+            const rows = XLSX.utils.sheet_to_json(sheet);
+
+            const tbody = document.getElementById('stockTableBody');
+            const productNameSelect = document.getElementById('productName');
+            tbody.innerHTML = '';
+            productNameSelect.innerHTML = '<option value="" disabled selected>Select a product</option>';
+
+            let totalStockValue = 0;
+            rows.forEach(row => {
+                const { ProductName, CurrentStock, MRP, SalesPrice } = row;
+                totalStockValue += (SalesPrice || 0) * (CurrentStock || 0);
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${ProductName || ''}</td>
+                    <td>${CurrentStock || 0}</td>
+                    <td>₹${MRP || 0}</td>
+                    <td>₹${SalesPrice || 0}</td>
+                `;
+                tbody.appendChild(tr);
+
+                const option = document.createElement('option');
+                option.value = ProductName;
+                option.textContent = ProductName;
+                productNameSelect.appendChild(option);
+            });
+
+            document.getElementById('totalStockValue').textContent = `₹${totalStockValue.toFixed(2)}`;
+        };
+
+        reader.readAsArrayBuffer(file);
+    });
+
+    // Handle order submission
+    document.getElementById('orderForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        const productName = document.getElementById('productName').value;
+        const quantity = document.getElementById('quantity').value;
+        const unit = document.getElementById('unit').value;
+        const partyName = document.getElementById('partyName').value;
+        const salesmanName = document.getElementById('salesmanName').value;
+        const orderDate = document.getElementById('orderDate').value;
+        const specialPrice = document.getElementById('specialPrice').value;
+
+        alert(`Order Submitted Successfully!\n\nProduct: ${productName}\nQuantity: ${quantity} ${unit}\nParty: ${partyName}\nSalesman: ${salesmanName}\nDate: ${orderDate}\nSpecial Price: ${specialPrice || 'N/A'}`);
+        document.getElementById('orderForm').reset();
+    });
+</script>
+
 </body>
 </html>
