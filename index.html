@@ -3,65 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stock and Order Management</title>
+    <title>Stock & Order Management</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
             background-color: #f8f9fa;
-            padding: 20px;
+            padding: 15px;
         }
         h1 {
             text-align: center;
             color: #007bff;
         }
         .happy {
-            font-size: 1.2rem;
+            text-align: center;
             color: #28a745;
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+        }
+        .file-upload {
+            margin-bottom: 20px;
         }
         table {
-            margin-top: 20px;
+            font-size: 0.9rem;
         }
         th {
             background-color: #007bff;
             color: white;
         }
-        .emoji {
-            font-size: 1.5rem;
-        }
         .order-form {
-            background-color: #fff;
+            background-color: white;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
-        .order-form input, .order-form select {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+        .order-form input, .order-form select, .order-form button {
+            margin-bottom: 10px;
         }
         .order-form button {
             background-color: #28a745;
             color: white;
-            padding: 10px 20px;
             border: none;
-            border-radius: 4px;
             cursor: pointer;
         }
         .order-form button:hover {
             background-color: #218838;
+        }
+        .alert {
+            text-align: center;
+            font-size: 1.1rem;
         }
     </style>
 </head>
 <body>
 
 <h1>📋 Stock & Order Management 💼</h1>
-<p class="happy">Welcome to the stock overview page! 😊 Use this to check prices and place orders quickly.</p>
+<p class="happy">Welcome! Upload the stock file, view stock details, and place your orders easily. 😊</p>
 
-<div class="mb-3">
+<div class="file-upload">
     <label for="fileInput" class="form-label">📂 Upload Stock File:</label>
     <input type="file" id="fileInput" class="form-control">
 </div>
@@ -71,57 +71,38 @@
         <tr>
             <th>Brand Name</th>
             <th>Stock in Hand</th>
-            <th>MRP</th>
-            <th>Sale Price</th>
+            <th>MRP (₹)</th>
+            <th>Sale Price (₹)</th>
         </tr>
     </thead>
     <tbody id="stockTableBody">
-        <tr><td colspan="4" class="text-center">No data available yet. Upload the stock file above. ⬆️</td></tr>
+        <tr>
+            <td colspan="4" class="text-center">No data available. Upload the stock file above. ⬆️</td>
+        </tr>
     </tbody>
 </table>
 
-<div class="alert alert-info mt-3">
+<div class="alert alert-info">
     Total Stock Value: <span id="totalStockValue">₹0.00</span>
 </div>
 
 <div class="order-form mt-4">
     <h2>🛒 Place Your Order</h2>
     <form id="orderForm">
-        <div class="mb-3">
-            <label for="productName" class="form-label">Product Name:</label>
-            <select id="productName" class="form-control" required>
-                <!-- Product options will be populated here -->
-            </select>
-        </div>
-        <div class="mb-3">
-            <label for="quantity" class="form-label">Quantity:</label>
-            <input type="number" id="quantity" class="form-control" min="1" required>
-        </div>
-        <div class="mb-3">
-            <label for="unit" class="form-label">Unit:</label>
-            <select id="unit" class="form-control" required>
-                <option value="boxes">Boxes</option>
-                <option value="units">Units</option>
-                <option value="cases">Cases</option>
-            </select>
-        </div>
-        <div class="mb-3">
-            <label for="partyName" class="form-label">Party Name:</label>
-            <input type="text" id="partyName" class="form-control" required>
-        </div>
-        <div class="mb-3">
-            <label for="salesmanName" class="form-label">Salesman Name:</label>
-            <input type="text" id="salesmanName" class="form-control" required>
-        </div>
-        <div class="mb-3">
-            <label for="orderDate" class="form-label">Order Date:</label>
-            <input type="date" id="orderDate" class="form-control" value="" required>
-        </div>
-        <div class="mb-3">
-            <label for="specialPrice" class="form-label">Special Price (Optional):</label>
-            <input type="number" id="specialPrice" class="form-control">
-        </div>
-        <button type="submit" class="btn btn-success">Submit Order 📝</button>
+        <select id="productName" class="form-control" required>
+            <option value="" disabled selected>Select a Product</option>
+        </select>
+        <input type="number" id="quantity" class="form-control" min="1" placeholder="Quantity" required>
+        <select id="unit" class="form-control" required>
+            <option value="boxes">Boxes</option>
+            <option value="units">Units</option>
+            <option value="cases">Cases</option>
+        </select>
+        <input type="text" id="partyName" class="form-control" placeholder="Party Name" required>
+        <input type="text" id="salesmanName" class="form-control" placeholder="Salesman Name" required>
+        <input type="date" id="orderDate" class="form-control" required>
+        <input type="number" id="specialPrice" class="form-control" placeholder="Special Price (Optional)">
+        <button type="submit" class="btn btn-success w-100">Submit Order 📝</button>
     </form>
 </div>
 
@@ -132,42 +113,53 @@
     // Handle stock file upload
     document.getElementById('fileInput').addEventListener('change', function (e) {
         const file = e.target.files[0];
-        if (!file) return;
+        if (!file) {
+            alert("No file selected. Please upload a valid stock file.");
+            return;
+        }
 
         const reader = new FileReader();
         reader.onload = function (e) {
-            const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, { type: 'array' });
-            const sheetName = workbook.SheetNames[0];
-            const sheet = workbook.Sheets[sheetName];
-            const rows = XLSX.utils.sheet_to_json(sheet);
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const sheet = workbook.Sheets[sheetName];
+                const rows = XLSX.utils.sheet_to_json(sheet);
 
-            const tbody = document.getElementById('stockTableBody');
-            const productNameSelect = document.getElementById('productName');
-            tbody.innerHTML = '';
-            productNameSelect.innerHTML = '<option value="" disabled selected>Select a product</option>';
+                const tbody = document.getElementById('stockTableBody');
+                const productNameSelect = document.getElementById('productName');
+                tbody.innerHTML = '';
+                productNameSelect.innerHTML = '<option value="" disabled selected>Select a Product</option>';
 
-            let totalStockValue = 0;
-            rows.forEach(row => {
-                const { ProductName, CurrentStock, MRP, SalesPrice } = row;
-                totalStockValue += (SalesPrice || 0) * (CurrentStock || 0);
+                let totalStockValue = 0;
+                rows.forEach(row => {
+                    const { BrandName, StockInHand, MRP, SalePrice } = row;
 
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${ProductName || ''}</td>
-                    <td>${CurrentStock || 0}</td>
-                    <td>₹${MRP || 0}</td>
-                    <td>₹${SalesPrice || 0}</td>
-                `;
-                tbody.appendChild(tr);
+                    // Calculate total stock value
+                    totalStockValue += (SalePrice || 0) * (StockInHand || 0);
 
-                const option = document.createElement('option');
-                option.value = ProductName;
-                option.textContent = ProductName;
-                productNameSelect.appendChild(option);
-            });
+                    // Populate table
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${BrandName || 'N/A'}</td>
+                        <td>${StockInHand || 0}</td>
+                        <td>₹${MRP || 0}</td>
+                        <td>₹${SalePrice || 0}</td>
+                    `;
+                    tbody.appendChild(tr);
 
-            document.getElementById('totalStockValue').textContent = `₹${totalStockValue.toFixed(2)}`;
+                    // Populate dropdown
+                    const option = document.createElement('option');
+                    option.value = BrandName || 'N/A';
+                    option.textContent = BrandName || 'N/A';
+                    productNameSelect.appendChild(option);
+                });
+
+                document.getElementById('totalStockValue').textContent = `₹${totalStockValue.toFixed(2)}`;
+            } catch (error) {
+                alert("Error reading the file. Please ensure it's a valid Excel file with the correct format.");
+            }
         };
 
         reader.readAsArrayBuffer(file);
@@ -185,7 +177,7 @@
         const orderDate = document.getElementById('orderDate').value;
         const specialPrice = document.getElementById('specialPrice').value;
 
-        alert(`Order Submitted Successfully!\n\nProduct: ${productName}\nQuantity: ${quantity} ${unit}\nParty: ${partyName}\nSalesman: ${salesmanName}\nDate: ${orderDate}\nSpecial Price: ${specialPrice || 'N/A'}`);
+        alert(`Order Submitted Successfully!\n\nProduct: ${productName}\nQuantity: ${quantity} ${unit}\nParty: ${partyName}\nSalesman: ${salesmanName}\nDate: ${orderDate}\nSpecial Price: ₹${specialPrice || 'N/A'}`);
         document.getElementById('orderForm').reset();
     });
 </script>
