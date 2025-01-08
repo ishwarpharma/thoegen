@@ -230,7 +230,6 @@
     </div>
   </header>
   <div class="container">
-    <input type="file" id="file-upload" />
     <input type="text" id="search" class="search-bar" placeholder="Search items...">
     <div id="item-list"></div>
   </div>
@@ -284,27 +283,20 @@
     let data = [];
     let cart = [];
 
-    document.getElementById('file-upload').addEventListener('change', handleFile, false);
-
-    function handleFile(e) {
-      const file = e.target.files[0];
-      const reader = new FileReader();
-
-      reader.onload = function(event) {
-        const data = new Uint8Array(event.target.result);
+    // Fetch data from the local XLSX file
+    fetch('data.xlsx')
+      .then(response => response.arrayBuffer())
+      .then(data => {
         const workbook = XLSX.read(data, { type: 'array' });
         const sheetName = workbook.SheetNames[0];
         const sheet = workbook.Sheets[sheetName];
         const json = XLSX.utils.sheet_to_json(sheet);
         displayItems(json);
-      };
+      });
 
-      reader.readAsArrayBuffer(file);
-    }
-
-  
     // Display items
     function displayItems(items) {
+      data = items; // Store the items in the global data variable
       const itemList = document.getElementById('item-list');
       itemList.innerHTML = '';
       items.forEach(item => {
@@ -415,7 +407,6 @@
       const options = { day: '2-digit', month: 'long', year: 'numeric' };
       return date.toLocaleDateString('en-IN', options);
     }
-
   </script>
 </body>
 </html>
