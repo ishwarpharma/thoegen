@@ -218,7 +218,145 @@
   </div>
 
   <script>
-    // Existing JavaScript remains unchanged
+    let data = [];
+    let cart = [];
+
+    // Fetch data from the local XLSX file
+    fetch('data.xlsx')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Network response was not ok: ${response.statusText}`);
+        }
+        return response.arrayBuffer();
+      })
+      .then(dataBuffer => {
+        const workbook = XLSX.read(new Uint8Array(dataBuffer), { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(sheet);
+        data = jsonData; // Store the data globally
+        displayItems(data); // Display the items after loading
+      })
+      .catch(error => console.error('Error fetching or parsing the Excel file:', error));
+
+    // Display items
+    function displayItems(items) {
+      const itemList = document.getElementById('item-list');
+      itemList.innerHTML = '';
+      items.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'item';
+        div.innerHTML = `
+          <div class="item-details">
+            <strong>${item['Product Name']}</strong><br>
+            <span>Stock: ${item['Current Stock']}</span><br>
+            <span>M.R.P.: ₹${parseFloat(item['M.R.P.']).toFixed(2)}</span><br>
+            <span>Sales Price: ₹${parseFloat(item['Sales Price']).toFixed(2)}</span><br>
+            <span>Company: ${item['Company']}</span>
+          </div>
+        `;
+        div.addEventListener('click', () => selectItem(item));
+        itemList.appendChild(div);
+      });
+    }
+
+    // Search functionality
+    document.getElementById('search').addEventListener('input', function() {
+      const query = this.value.toLowerCase();
+      const filteredData = data.filter(item =>
+        item['Product Name'].toLowerCase().includes(query)
+      );
+      displayItems(filteredData); // Display only the filtered data
+    });
+
+    // Reset search bar and display all items
+    function resetSearch() {
+      document.getElementById('search').value = ''; // Clear the search input
+      displayItems(data); // Re-display the original full data
+    }
+
+    // Select item (Order Popup)
+    function selectItem(item) {
+      document.getElementById('selected-item-details').innerHTML = `
+        <strong>${item['Product Name']}</strong><br>
+        <span>Pack: ${item['Pack']}</span> <span>Box: ${item['Box']}</span> <span>Shipper: ${item['Shipper']}</span>
+      `;
+      document.getElementById('order-qty').value = '';
+      document.getElementById('special-rate').value = '';
+      document.querySelector('input[name="unit"][value="boxes"]').checked = true;
+      document.getElementById('modal').style.display = 'flex';
+    }
+
+    // Add to cart
+    function addToCart() {
+      const qty = parseFloat(document.getElementById('order-qty').value) || 0;
+      const rate = parseFloat(document.getElementById('special-rate').value) || 0;
+      const unit = document.querySelector('input[name="unit"]:checked').value;
+      const itemDetails = document.getElementById('selected-item-details').innerHTML;
+      cart.push({ itemDetails, qty, rate, unit });
+      closeModal();
+    }
+
+    // Close modal
+    function closeModal() {
+      document.getElementById('modal').style.display = 'none';
+    }
+
+    // View cart
+    function viewCart() {
+      const cartItems = document.getElementById('cart-items');
+      cartItems.innerHTML = '';
+      cart.forEach((item, index) => {
+        const { itemDetails, qty, rate, unit } = item;
+        const rateDisplay = rate ? `, Special Rate: ₹${rate.toFixed(2)}` : '';
+        const div = document.createElement('div');
+        div.className = 'cart-item';
+        div.innerHTML = `
+          <div class="cart-item-details">
+            ${index + 1}. ${itemDetails} - <span class="qty">Qty: ${qty}</span> <span class="unit">${unit}</span>${rateDisplay}
+          </div>
+        `;
+        cartItems.appendChild(div);
+      });
+      document.getElementById('cart-modal').style.display = 'flex';
+    }
+
+    // Close cart
+    function closeCart() {
+      document.getElementById('cart-modal').style.display = 'none';
+    }
+
+    // New order
+    function newOrder() {
+      cart = [];
+      document.getElementById('stockist-name').value = '';
+      document.getElementById('salesman-name').value = '';
+      closeCart();
+      alert("New order started. Cart cleared.");
+    }
+
+    // Export to PDF
+    function exportToPDF() {
+      const stockistName = document.getElementById('stockist-name').value;
+      const salesmanName = document.getElementById('salesman-name').value;
+      const cartContent = document.getElementById('cart-items').innerHTML;
+      const win = window.open('', '', 'height=700,width=700');
+      win.document.write('<html><head><title>Order Summary</title>');
+      win.document.write('</head><body>');
+      win.document.write('<h3>Order Summary (' + formatDate(new Date()) + ')</h3>');
+      win.document.write('<p><strong>Stockist Name:</strong> ' + stockistName + '</p>');
+      win.document.write('<p><strong>Salesman Name:</strong> ' + salesmanName + '</p>');
+      win.document.write(cartContent);
+      win.document.write('</body></html>');
+      win.document.close();
+      win.print();
+    }
+
+    // Format date to Indian format
+    function formatDate(date) {
+      const options = { day: '2-digit', month: 'long', year: 'numeric' };
+      return date.toLocaleDateString('en-IN', options);
+    }
   </script>
 </body>
 </html>
