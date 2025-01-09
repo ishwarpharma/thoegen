@@ -50,18 +50,34 @@
       margin-top: 60px;
     }
 
-    .search-bar {
+    .search-bar-container {
+      position: relative;
       width: 100%;
+    }
+
+    .search-bar {
+      width: calc(100% - 60px);
       padding: 12px;
       margin-bottom: 15px;
       border: 1px solid #ccc;
       border-radius: 5px;
       font-size: 1rem;
-      position: -webkit-sticky;
-      position: sticky;
-      top: 60px;
-      background-color: #f4f4f9;
-      z-index: 1000;
+    }
+
+    .reset-button {
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      margin: 0;
+      padding: 0 12px;
+      background-color: #ff5733;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+      border-top-right-radius: 5px;
+      border-bottom-right-radius: 5px;
     }
 
     .item {
@@ -230,7 +246,10 @@
     </div>
   </header>
   <div class="container">
-    <input type="text" id="search" class="search-bar" placeholder="Search items...">
+    <div class="search-bar-container">
+      <input type="text" id="search" class="search-bar" placeholder="Search items...">
+      <button id="reset-search" class="reset-button" onclick="resetSearch()">Reset</button>
+    </div>
     <div id="item-list"></div>
   </div>
 
@@ -294,13 +313,13 @@
       .then(data => {
         const workbook = XLSX.read(new Uint8Array(data), { type: 'array' });
         const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
+             const sheet = workbook.Sheets[sheetName];
         const json = XLSX.utils.sheet_to_json(sheet);
         displayItems(json);
       })
       .catch(error => console.error('Error fetching or parsing the Excel file:', error));
 
-      // Display items
+    // Display items
     function displayItems(items) {
       data = items; // Store the items in the global data variable
       const itemList = document.getElementById('item-list');
@@ -330,6 +349,12 @@
       );
       displayItems(filteredData);
     });
+
+    // Reset search bar and display all items
+    function resetSearch() {
+      document.getElementById('search').value = '';
+      displayItems(data); // Display all items
+    }
 
     // Select item (Order Popup)
     function selectItem(item) {
@@ -413,7 +438,6 @@
       const options = { day: '2-digit', month: 'long', year: 'numeric' };
       return date.toLocaleDateString('en-IN', options);
     }
-
   </script>
 </body>
 </html>
