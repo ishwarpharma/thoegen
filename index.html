@@ -355,68 +355,77 @@
       document.getElementById('modal').style.display = 'none';
     }
 
-    // View cart
-    function viewCart() {
-      const cartItems = document.getElementById('cart-items');
-      cartItems.innerHTML = '';
-      cart.forEach((item, index) => {
-        const { itemDetails, qty, rate, unit } = item;
-        const rateDisplay = rate ? `<span style="color: green;">Special Rate: ₹${rate.toFixed(2)}</span>` : '';
-        const div = document.createElement('div');
-        div.className = 'cart-item';
-        div.innerHTML = `
-          <div class="cart-item-details">
-            ${index + 1}. ${itemDetails.split('<br>')[0]} - <span style="color: red;">Qty: ${qty} ${unit}</span> ${rateDisplay}
-            <br><span class="sales-price">${itemDetails.match(/Sales Price: ₹\d+\.\d+/)[0]}</span>
-          </div>
-        `;
-        cartItems.appendChild(div);
-      });
-      document.getElementById('cart-modal').style.display = 'flex';
-    }
+   // View cart
+function viewCart() {
+  const cartItems = document.getElementById('cart-items');
+  cartItems.innerHTML = '';
 
-    // Close cart
-    function closeCart() {
-      document.getElementById('cart-modal').style.display = 'none';
-    }
+  cart.forEach((item, index) => {
+    const { itemDetails, qty, rate, unit } = item;
+    const productName = itemDetails.split('<br>')[0];
+    const salePrice = itemDetails.match(/Sales Price: ₹\d+\.\d+/)[0].replace('Sales Price: ', '');
+    const rateDisplay = rate ? `@ ₹${rate.toFixed(2)}` : `@ ${salePrice}`;
 
-    // New order
-    function newOrder() {
-      cart = [];
-      document.getElementById('party-name').value = '';
-      document.getElementById('salesman-name').value = '';
-      closeCart();
-      alert("New order started. Cart cleared.");
-    }
+    const div = document.createElement('div');
+    div.className = 'cart-item';
+    div.style.marginBottom = '10px'; // Add space between items
+    div.innerHTML = `
+      <div class="cart-item-details" style="margin-bottom: 10px;">
+        <span style="font-weight: bold; color: #4caf50;">${index + 1}. ${productName}</span><br>
+        <span style="color: #ff5722;">Qty: ${qty} ${unit} ${rateDisplay}</span>
+      </div>
+    `;
 
-    // Export to PDF
-    function exportToPDF() {
-      const partyName = document.getElementById('party-name').value;
-      const salesmanName = document.getElementById('salesman-name').value;
-      const cartContent = document.getElementById('cart-items').innerHTML;
-      const date = new Date().toLocaleDateString('en-IN', {
-        day: '2-digit',
-        month: 'long',
-        year: 'numeric',
-      });
-      const win = window.open('', '', 'height=700,width=700');
-      win.document.write('<html><head><title>Order Summary</title>');
-      win.document.write('</head><body>');
-      win.document.write('<h3>Order Summary (' + date + ')</h3>');
-      win.document.write('<p><strong>Name of Party:</strong> ' + partyName + '</p>');
-      win.document.write('<p><strong>Name of Salesman:</strong> ' + salesmanName + '</p>');
-      win.document.write(cartContent);
-      win.document.write('</body></html>');
-      win.document.close();
-      win.print();
-    }
+    cartItems.appendChild(div);
+  });
 
-    // Set current date in Order Summary
-    document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-IN', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric',
-    });
-  </script>
-</body>
-</html>
+  // Add spacing between Salesman Name and the first item
+  const cartModalContent = document.querySelector('.cart-modal-content');
+  cartModalContent.style.paddingBottom = '20px';
+
+  document.getElementById('cart-modal').style.display = 'flex';
+}
+
+// Close cart
+function closeCart() {
+  document.getElementById('cart-modal').style.display = 'none';
+}
+
+// New order
+function newOrder() {
+  cart = [];
+  document.getElementById('party-name').value = '';
+  document.getElementById('salesman-name').value = '';
+  closeCart();
+  alert("New order started. Cart cleared.");
+}
+
+// Export to PDF
+function exportToPDF() {
+  const partyName = document.getElementById('party-name').value;
+  const salesmanName = document.getElementById('salesman-name').value;
+  const cartContent = document.getElementById('cart-items').innerHTML;
+  const date = new Date().toLocaleDateString('en-IN', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  });
+  const win = window.open('', '', 'height=700,width=700');
+  win.document.write('<html><head><title>Order Summary</title>');
+  win.document.write('</head><body>');
+  win.document.write('<h3>Order Summary (' + date + ')</h3>');
+  win.document.write('<p><strong>Name of Party:</strong> ' + partyName + '</p>');
+  win.document.write('<p><strong>Name of Salesman:</strong> ' + salesmanName + '</p>');
+  win.document.write(cartContent);
+  win.document.write('</body></html>');
+  win.document.close();
+  win.print();
+}
+
+// Set current date in Order Summary
+document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-IN', {
+  day: '2-digit',
+  month: 'long',
+  year: 'numeric',
+});
+
