@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>📦 Ishwar Order System</title>
+  <title>📦 Ishwar Pharma</title>
   <style>
     body {
       font-family: "Arial", sans-serif;
@@ -34,23 +34,17 @@
       gap: 10px;
     }
 
-    .container {
-      padding: 15px 20px;
-      margin-top: 120px;
-    }
-
     .search-bar-container {
-      position: absolute;
-      top: 70px;
-      left: 0;
+      position: sticky;
+      top: 60px;
+      z-index: 999;
       width: 100%;
       padding: 10px;
+      background-color: #f0f8ff;
+      border-bottom: 2px solid #ddd;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background-color: #f0f8ff;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
     .search-bar {
@@ -72,6 +66,11 @@
       border-radius: 8px;
     }
 
+    .container {
+      padding: 15px 20px;
+      margin-top: 110px;
+    }
+
     .item {
       display: flex;
       flex-direction: column;
@@ -91,6 +90,15 @@
 
     .item:hover {
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .item-details strong {
+      font-size: 1rem;
+    }
+
+    .item-details .stock {
+      color: blue;
+      font-weight: bold;
     }
 
     .sales-price {
@@ -205,7 +213,7 @@
   <header>
     <div class="header-buttons">
       <button onclick="newOrder()">🆕 New Order</button>
-      <span>📦 Ishwar Order System</span>
+      <span>📦 Ishwar Pharma</span>
       <button onclick="viewCart()">🛒 View Cart</button>
     </div>
   </header>
@@ -290,7 +298,7 @@
         div.className = 'item';
         div.innerHTML = `
           <div class="item-details">
-            <strong>${item['Product Name']}</strong><br>
+            <strong>${item['Product Name']} <span class="stock">(${item['Current Stock']})</span></strong><br>
             <span class="sales-price">Sales Price: ₹${parseFloat(item['Sales Price']).toFixed(2)}</span><br>
             <span>MRP: ₹${parseFloat(item['M.R.P.']).toFixed(2)}</span>
           </div>
@@ -319,8 +327,8 @@
     function selectItem(item) {
       document.getElementById('selected-item-details').innerHTML = `
         <strong>${item['Product Name']}</strong><br>
+        <span class="stock">Stock: ${item['Current Stock']}</span><br>
         <span class="sales-price">Sales Price: ₹${parseFloat(item['Sales Price']).toFixed(2)}</span><br>
-        <span>MRP: ₹${parseFloat(item['M.R.P.']).toFixed(2)}</span><br>
       `;
       document.getElementById('order-qty').value = '';
       document.getElementById('special-rate').value = '';
@@ -343,67 +351,66 @@
       document.getElementById('modal').style.display = 'none';
     }
 
-    // View cart
-    function viewCart() {
-      const cartItems = document.getElementById('cart-items');
-      cartItems.innerHTML = '';
-      cart.forEach((item, index) => {
-        const { itemDetails, qty, rate, unit } = item;
-        const rateDisplay = rate ? `<span style="color: green;">Special Rate: ₹${rate.toFixed(2)}</span>` : '';
-        const div = document.createElement('div');
-        div.className = 'cart-item';
-        div.innerHTML = `
-          <div class="cart-item-details">
-            ${index + 1}. ${itemDetails} - <span style="color: red;">Qty: ${qty} ${unit}</span> ${rateDisplay}
-          </div>
-        `;
-        cartItems.appendChild(div);
-      });
-      document.getElementById('cart-modal').style.display = 'flex';
-    }
+ // View cart
+function viewCart() {
+  const cartItems = document.getElementById('cart-items');
+  cartItems.innerHTML = '';
+  cart.forEach((item, index) => {
+    const { itemDetails, qty, rate, unit } = item;
+    const rateDisplay = rate ? `<span style="color: green;">Special Rate: ₹${rate.toFixed(2)}</span>` : '';
+    const div = document.createElement('div');
+    div.className = 'cart-item';
+    div.innerHTML = `
+      <div class="cart-item-details">
+        ${index + 1}. ${itemDetails.split('<br>')[0]} - <span style="color: red;">Qty: ${qty} ${unit}</span> ${rateDisplay}
+        <br><span class="sales-price">${itemDetails.match(/Sales Price: ₹\d+\.\d+/)[0]}</span>
+      </div>
+    `;
+    cartItems.appendChild(div);
+  });
+  document.getElementById('cart-modal').style.display = 'flex';
+}
 
-    // Close cart
-    function closeCart() {
-      document.getElementById('cart-modal').style.display = 'none';
-    }
+// Close cart
+function closeCart() {
+  document.getElementById('cart-modal').style.display = 'none';
+}
 
-    // New order
-    function newOrder() {
-      cart = [];
-      document.getElementById('party-name').value = '';
-      document.getElementById('salesman-name').value = '';
-      closeCart();
-      alert("New order started. Cart cleared.");
-    }
+// New order
+function newOrder() {
+  cart = [];
+  document.getElementById('party-name').value = '';
+  document.getElementById('salesman-name').value = '';
+  closeCart();
+  alert("New order started. Cart cleared.");
+}
 
-    // Export to PDF
-    function exportToPDF() {
-      const partyName = document.getElementById('party-name').value;
-      const salesmanName = document.getElementById('salesman-name').value;
-      const cartContent = document.getElementById('cart-items').innerHTML;
-      const date = new Date().toLocaleDateString('en-IN', {
-        day: '2-digit',
-        month: 'long',
-        year: 'numeric',
-      });
-      const win = window.open('', '', 'height=700,width=700');
-      win.document.write('<html><head><title>Order Summary</title>');
-      win.document.write('</head><body>');
-      win.document.write('<h3>Order Summary (' + date + ')</h3>');
-      win.document.write('<p><strong>Name of Party:</strong> ' + partyName + '</p>');
-      win.document.write('<p><strong>Name of Salesman:</strong> ' + salesmanName + '</p>');
-      win.document.write(cartContent);
-      win.document.write('</body></html>');
-      win.document.close();
-      win.print();
-    }
+// Export to PDF
+function exportToPDF() {
+  const partyName = document.getElementById('party-name').value;
+  const salesmanName = document.getElementById('salesman-name').value;
+  const cartContent = document.getElementById('cart-items').innerHTML;
+  const date = new Date().toLocaleDateString('en-IN', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  });
+  const win = window.open('', '', 'height=700,width=700');
+  win.document.write('<html><head><title>Order Summary</title>');
+  win.document.write('</head><body>');
+  win.document.write('<h3>Order Summary (' + date + ')</h3>');
+  win.document.write('<p><strong>Name of Party:</strong> ' + partyName + '</p>');
+  win.document.write('<p><strong>Name of Salesman:</strong> ' + salesmanName + '</p>');
+  win.document.write(cartContent);
+  win.document.write('</body></html>');
+  win.document.close();
+  win.print();
+}
 
-    // Set current date in Order Summary
-    document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-IN', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric',
-    });
-  </script>
-</body>
-</html>
+// Set current date in Order Summary
+document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-IN', {
+  day: '2-digit',
+  month: 'long',
+  year: 'numeric',
+});
+
