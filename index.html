@@ -310,7 +310,7 @@
         }
         return response.arrayBuffer();
       })
-      .then(data => {
+         .then(data => {
         const workbook = XLSX.read(new Uint8Array(data), { type: 'array' });
         const sheetName = workbook.SheetNames[0];
         const sheet = workbook.Sheets[sheetName];
@@ -347,13 +347,13 @@
       const filteredData = data.filter(item =>
         item['Product Name'].toLowerCase().includes(query)
       );
-      displayItems(filteredData);
+      displayItems(filteredData); // Display only the filtered data
     });
 
     // Reset search bar and display all items
     function resetSearch() {
-      document.getElementById('search').value = '';
-      displayItems(data); // Display all items
+      document.getElementById('search').value = ''; // Clear the search input
+      displayItems(data); // Re-display the original full data
     }
 
     // Select item (Order Popup)
@@ -438,7 +438,7 @@
       const options = { day: '2-digit', month: 'long', year: 'numeric' };
       return date.toLocaleDateString('en-IN', options);
     }
-
   </script>
 </body>
 </html>
+
