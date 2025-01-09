@@ -36,16 +36,19 @@
 
     .container {
       padding: 15px 20px;
-      margin-top: 80px;
+      margin-top: 120px;
     }
 
     .search-bar-container {
+      position: absolute;
+      top: 70px;
+      left: 0;
+      width: 100%;
+      padding: 10px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 15px;
       background-color: #f0f8ff;
-      padding: 10px;
       border-radius: 8px;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
@@ -88,6 +91,11 @@
 
     .item:hover {
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .sales-price {
+      color: red;
+      font-weight: bold;
     }
 
     .modal, .cart-modal {
@@ -201,11 +209,11 @@
       <button onclick="viewCart()">🛒 View Cart</button>
     </div>
   </header>
+  <div class="search-bar-container">
+    <input type="text" id="search" class="search-bar" placeholder="🔍 Search items...">
+    <button id="reset-search" class="reset-button" onclick="resetSearch()">🔄 Reset</button>
+  </div>
   <div class="container">
-    <div class="search-bar-container">
-      <input type="text" id="search" class="search-bar" placeholder="🔍 Search items...">
-      <button id="reset-search" class="reset-button" onclick="resetSearch()">🔄 Reset</button>
-    </div>
     <div id="item-list"></div>
   </div>
 
@@ -217,9 +225,8 @@
       <input type="number" id="order-qty" class="narrow" placeholder="Enter quantity" inputmode="numeric">
 
       <div class="radio-group">
-        <label><input type="radio" name="unit" value="strips"> Strips</label>
-        <label><input type="radio" name="unit" value="pcs"> Pcs</label>
-        <label><input type="radio" name="unit" value="boxes" checked> Boxes</label>
+        <label><input type="radio" name="unit" value="pcs" checked> Pcs</label>
+        <label><input type="radio" name="unit" value="boxes"> Boxes</label>
         <label><input type="radio" name="unit" value="cases"> Cases</label>
       </div>
 
@@ -235,7 +242,15 @@
 
   <div id="cart-modal" class="cart-modal">
     <div class="cart-modal-content">
-      <h3>🧾 Order Summary</h3>
+      <h3>🧾 Order Summary (<span id="current-date"></span>)</h3>
+      <div class="form-group">
+        <label for="party-name">Name of Party:</label>
+        <input type="text" id="party-name" placeholder="Enter party name">
+      </div>
+      <div class="form-group">
+        <label for="salesman-name">Name of Salesman:</label>
+        <input type="text" id="salesman-name" placeholder="Enter salesman name">
+      </div>
       <div id="cart-items"></div>
       <div class="buttons">
         <button class="button-text" onclick="closeCart()">❌ Close</button>
@@ -276,8 +291,8 @@
         div.innerHTML = `
           <div class="item-details">
             <strong>${item['Product Name']}</strong><br>
-            <span>Stock: ${item['Current Stock']}</span><br>
-            <span>Sales Price: ₹${parseFloat(item['Sales Price']).toFixed(2)}</span><br>
+            <span class="sales-price">Sales Price: ₹${parseFloat(item['Sales Price']).toFixed(2)}</span><br>
+            <span>MRP: ₹${parseFloat(item['M.R.P.']).toFixed(2)}</span>
           </div>
         `;
         div.addEventListener('click', () => selectItem(item));
@@ -304,12 +319,12 @@
     function selectItem(item) {
       document.getElementById('selected-item-details').innerHTML = `
         <strong>${item['Product Name']}</strong><br>
-        <span>Stock: ${item['Current Stock']}</span><br>
-        <span>Sales Price: ₹${parseFloat(item['Sales Price']).toFixed(2)}</span><br>
+        <span class="sales-price">Sales Price: ₹${parseFloat(item['Sales Price']).toFixed(2)}</span><br>
+        <span>MRP: ₹${parseFloat(item['M.R.P.']).toFixed(2)}</span><br>
       `;
       document.getElementById('order-qty').value = '';
       document.getElementById('special-rate').value = '';
-      document.querySelector('input[name="unit"][value="boxes"]').checked = true;
+      document.querySelector('input[name="unit"][value="pcs"]').checked = true;
       document.getElementById('modal').style.display = 'flex';
     }
 
@@ -334,12 +349,12 @@
       cartItems.innerHTML = '';
       cart.forEach((item, index) => {
         const { itemDetails, qty, rate, unit } = item;
-        const rateDisplay = rate ? `, Special Rate: ₹${rate.toFixed(2)}` : '';
+        const rateDisplay = rate ? `<span style="color: green;">Special Rate: ₹${rate.toFixed(2)}</span>` : '';
         const div = document.createElement('div');
         div.className = 'cart-item';
         div.innerHTML = `
           <div class="cart-item-details">
-            ${index + 1}. ${itemDetails} - <span class="qty">Qty: ${qty}</span> <span class="unit">${unit}</span>${rateDisplay}
+            ${index + 1}. ${itemDetails} - <span style="color: red;">Qty: ${qty} ${unit}</span> ${rateDisplay}
           </div>
         `;
         cartItems.appendChild(div);
@@ -355,7 +370,7 @@
     // New order
     function newOrder() {
       cart = [];
-      document.getElementById('stockist-name').value = '';
+      document.getElementById('party-name').value = '';
       document.getElementById('salesman-name').value = '';
       closeCart();
       alert("New order started. Cart cleared.");
@@ -363,26 +378,32 @@
 
     // Export to PDF
     function exportToPDF() {
-      const stockistName = document.getElementById('stockist-name').value;
+      const partyName = document.getElementById('party-name').value;
       const salesmanName = document.getElementById('salesman-name').value;
       const cartContent = document.getElementById('cart-items').innerHTML;
+      const date = new Date().toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
+      });
       const win = window.open('', '', 'height=700,width=700');
       win.document.write('<html><head><title>Order Summary</title>');
       win.document.write('</head><body>');
-      win.document.write('<h3>Order Summary (' + formatDate(new Date()) + ')</h3>');
-      win.document.write('<p><strong>Stockist Name:</strong> ' + stockistName + '</p>');
-      win.document.write('<p><strong>Salesman Name:</strong> ' + salesmanName + '</p>');
+      win.document.write('<h3>Order Summary (' + date + ')</h3>');
+      win.document.write('<p><strong>Name of Party:</strong> ' + partyName + '</p>');
+      win.document.write('<p><strong>Name of Salesman:</strong> ' + salesmanName + '</p>');
       win.document.write(cartContent);
       win.document.write('</body></html>');
       win.document.close();
       win.print();
     }
 
-    // Format date to Indian format
-    function formatDate(date) {
-      const options = { day: '2-digit', month: 'long', year: 'numeric' };
-      return date.toLocaleDateString('en-IN', options);
-    }
+    // Set current date in Order Summary
+    document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+    });
   </script>
 </body>
 </html>
