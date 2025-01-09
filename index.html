@@ -19,7 +19,6 @@
       width: 100%;
       display: flex;
       align-items: center;
-      justify-content: space-between;
       padding: 10px;
       background-color: #007bff;
       color: white;
@@ -40,7 +39,6 @@
       padding: 10px;
       cursor: pointer;
       font-size: 1rem;
-      border-radius: 5px;
     }
 
     .header-buttons button:last-child {
@@ -108,6 +106,10 @@
       font-weight: bold;
     }
 
+    .color-pts {
+      color: red;
+    }
+
     .modal, .cart-modal {
       display: none;
       position: fixed;
@@ -130,6 +132,41 @@
       overflow-y: auto;
     }
 
+    .modal-content label, .cart-modal-content label {
+      display: block;
+      margin-top: 10px;
+    }
+
+    .modal-content input, .cart-modal-content input {
+      width: 100%;
+      padding: 8px;
+      font-size: 1rem;
+      margin-top: 5px;
+    }
+
+    .modal-content input.narrow, .cart-modal-content input.narrow {
+      width: 6ch;
+    }
+
+    .radio-group {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      margin-top: 10px;
+    }
+
+    .radio-group-inner {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      margin-bottom: 5px;
+    }
+
+    .radio-group-inner label {
+      display: flex;
+      align-items: center;
+    }
+
     .buttons {
       display: flex;
       justify-content: center;
@@ -146,6 +183,24 @@
       background: yellow;
       padding: 10px;
       border-radius: 50%;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-group label {
+      font-weight: bold;
+      display: block;
+    }
+
+    .form-group input {
+      width: calc(100% - 10px);
+      padding: 8px;
+      font-size: 1rem;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
     }
 
     @media (max-width: 600px) {
@@ -174,6 +229,10 @@
         padding: 6px;
         font-size: 0.9rem;
       }
+
+      table {
+        font-size: 0.9rem;
+      }
     }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
@@ -181,39 +240,60 @@
 <body>
   <header>
     <div class="header-buttons">
-      <button onclick="newOrder()">🆕 New Order</button>
-      <span>Ishwar Order System</span>
-      <button onclick="viewCart()">🛒 Cart</button>
+      <button onclick="newOrder()">New Order</button>
+      Ishwar Order System
+      <button onclick="viewCart()">Cart</button>
     </div>
   </header>
   <div class="container">
     <div class="search-bar-container">
-      <input type="text" id="search" class="search-bar" placeholder="🔍 Search items...">
-      <button id="reset-search" class="reset-button" onclick="resetSearch()">🔄 Reset</button>
+      <input type="text" id="search" class="search-bar" placeholder="Search items...">
+      <button id="reset-search" class="reset-button" onclick="resetSearch()">Reset</button>
     </div>
     <div id="item-list"></div>
   </div>
 
   <div id="modal" class="modal">
     <div class="modal-content">
-      <h3>🛍️ Order Details</h3>
+      <h3>Order Details</h3>
       <div id="selected-item-details"></div>
       <label for="order-qty">Order Quantity:</label>
       <input type="number" id="order-qty" class="narrow" placeholder="000000" inputmode="numeric">
+      
+      <div class="radio-group">
+        <div class="radio-group-inner">
+          <label><input type="radio" name="unit" value="strips"> Strips</label>
+          <label><input type="radio" name="unit" value="pcs"> Pcs</label>
+          <label><input type="radio" name="unit" value="boxes" checked> Boxes</label>
+          <label><input type="radio" name="unit" value="cases"> Cases</label>
+        </div>
+      </div>
+
+      <label for="special-rate">Special Rate:</label>
+      <input type="number" id="special-rate" class="narrow" placeholder="000000" step="0.01" inputmode="decimal">
+
       <div class="buttons">
-        <button class="button-text" onclick="addToCart()">➕ Add</button>
-        <button class="button-text" onclick="closeModal()">❌ Cancel</button>
+        <button class="button-text" onclick="addToCart()">ADD TO CART</button>
+        <button class="button-text" onclick="closeModal()">CANCEL</button>
       </div>
     </div>
   </div>
 
   <div id="cart-modal" class="cart-modal">
     <div class="cart-modal-content">
-      <h3>🧾 Order Summary</h3>
+      <h3>Order Summary</h3>
+      <div class="form-group">
+        <label for="stockist-name">Stockist Name:</label>
+        <input type="text" id="stockist-name" placeholder="Enter stockist name...">
+      </div>
+      <div class="form-group">
+        <label for="salesman-name">Salesman Name:</label>
+        <input type="text" id="salesman-name" placeholder="Enter salesman name...">
+      </div>
       <div id="cart-items"></div>
       <div class="buttons">
-        <button class="button-text" onclick="closeCart()">❌ Close</button>
-        <button class="button-text" onclick="exportToPDF()">📤 Export</button>
+        <button class="button-text" onclick="closeCart()">CLOSE</button>
+        <button class="button-text" onclick="exportToPDF()">EXPORT TO PDF</button>
       </div>
     </div>
   </div>
@@ -222,34 +302,46 @@
     let data = [];
     let cart = [];
 
+    // Fetch data from the local XLSX file
     fetch('data.xlsx')
-      .then(response => response.arrayBuffer())
-      .then(buffer => {
-        const workbook = XLSX.read(buffer, { type: 'array' });
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Network response was not ok: ${response.statusText}`);
+        }
+        return response.arrayBuffer();
+      })
+      .then(data => {
+        const workbook = XLSX.read(new Uint8Array(data), { type: 'array' });
         const sheetName = workbook.SheetNames[0];
         const sheet = workbook.Sheets[sheetName];
-        const jsonData = XLSX.utils.sheet_to_json(sheet);
-        data = jsonData;
-        displayItems(data);
-      });
+        const json = XLSX.utils.sheet_to_json(sheet);
+        displayItems(json);
+      })
+      .catch(error => console.error('Error fetching or parsing the Excel file:', error));
 
+    // Display items
     function displayItems(items) {
+      data = items; // Store the items in the global data variable
       const itemList = document.getElementById('item-list');
       itemList.innerHTML = '';
       items.forEach(item => {
         const div = document.createElement('div');
         div.className = 'item';
-        div.innerHTML = `<strong>${item['Product Name']}</strong>`;
+        div.innerHTML = `
+          <div class="item-details">
+            <strong>${item['Product Name']}</strong><br>
+            <span>Stock: ${item['Current Stock']}</span><br>
+            <span>M.R.P.: ₹${parseFloat(item['M.R.P.']).toFixed(2)}</span><br>
+            <span>Sales Price: ₹${parseFloat(item['Sales Price']).toFixed(2)}</span><br>
+            <span>Company: ${item['Company']}</span>
+          </div>
+        `;
         div.addEventListener('click', () => selectItem(item));
         itemList.appendChild(div);
       });
     }
 
-    function resetSearch() {
-      document.getElementById('search').value = '';
-      displayItems(data);
-    }
-
+    // Search functionality
     document.getElementById('search').addEventListener('input', function() {
       const query = this.value.toLowerCase();
       const filteredData = data.filter(item =>
@@ -258,30 +350,95 @@
       displayItems(filteredData);
     });
 
+    // Reset search bar and display all items
+    function resetSearch() {
+      document.getElementById('search').value = '';
+      displayItems(data); // Display all items
+    }
+
+    // Select item (Order Popup)
     function selectItem(item) {
+      document.getElementById('selected-item-details').innerHTML = `
+        <strong>${item['Product Name']}</strong><br>
+        <span>Pack: ${item['Pack']}</span> <span>Box: ${item['Box']}</span> <span>Shipper: ${item['Shipper']}</span>
+      `;
+      document.getElementById('order-qty').value = '';
+      document.getElementById('special-rate').value = '';
+      document.querySelector('input[name="unit"][value="boxes"]').checked = true;
       document.getElementById('modal').style.display = 'flex';
     }
 
+    // Add to cart
+    function addToCart() {
+      const qty = parseFloat(document.getElementById('order-qty').value) || 0;
+      const rate = parseFloat(document.getElementById('special-rate').value) || 0;
+      const unit = document.querySelector('input[name="unit"]:checked').value;
+      const itemDetails = document.getElementById('selected-item-details').innerHTML;
+      cart.push({ itemDetails, qty, rate, unit });
+      closeModal();
+    }
+
+    // Close modal
     function closeModal() {
       document.getElementById('modal').style.display = 'none';
     }
 
+    // View cart
     function viewCart() {
+      const cartItems = document.getElementById('cart-items');
+      cartItems.innerHTML = '';
+      cart.forEach((item, index) => {
+        const { itemDetails, qty, rate, unit } = item;
+        const rateDisplay = rate ? `, Special Rate: ₹${rate.toFixed(2)}` : '';
+        const div = document.createElement('div');
+        div.className = 'cart-item';
+        div.innerHTML = `
+          <div class="cart-item-details">
+            ${index + 1}. ${itemDetails} - <span class="qty">Qty: ${qty}</span> <span class="unit">${unit}</span>${rateDisplay}
+          </div>
+        `;
+        cartItems.appendChild(div);
+      });
       document.getElementById('cart-modal').style.display = 'flex';
     }
 
+    // Close cart
     function closeCart() {
       document.getElementById('cart-modal').style.display = 'none';
     }
 
+    // New order
     function newOrder() {
       cart = [];
-      alert('Cart cleared. New order started!');
+      document.getElementById('stockist-name').value = '';
+      document.getElementById('salesman-name').value = '';
+      closeCart();
+      alert("New order started. Cart cleared.");
     }
 
+    // Export to PDF
     function exportToPDF() {
-      alert('Exporting to PDF...');
+      const stockistName = document.getElementById('stockist-name').value;
+      const salesmanName = document.getElementById('salesman-name').value;
+      const cartContent = document.getElementById('cart-items').innerHTML;
+      const win = window.open('', '', 'height=700,width=700');
+      win.document.write('<html><head><title>Order Summary</title>');
+      win.document.write('</head><body>');
+      win.document.write('<h3>Order Summary (' + formatDate(new Date()) + ')</h3>');
+      win.document.write('<p><strong>Stockist Name:</strong> ' + stockistName + '</p>');
+      win.document.write('<p><strong>Salesman Name:</strong> ' + salesmanName + '</p>');
+      win.document.write(cartContent);
+      win.document.write('</body></html>');
+      win.document.close();
+      win.print();
     }
+
+    // Format date to Indian format
+    function formatDate(date) {
+      const options = { day: '2-digit', month: 'long', year: 'numeric' };
+      return date.toLocaleDateString('en-IN', options);
+    }
+
   </script>
 </body>
 </html>
